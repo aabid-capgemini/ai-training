@@ -187,44 +187,39 @@ Self-attention, also known as intra-attention, is a mechanism that relates diffe
 
 #### 3.1.1. Query, Key, and Value Vectors
 
-The self-attention mechanism operates by transforming each input token's embedding into three distinct vectors: Query (Q), Key (K), and Value (V). These transformations are achieved through linear layers (learnable weight matrices) applied to the input embedding (x_i) for each token (i):
+The self-attention mechanism operates by transforming each input token's embedding into three distinct vectors: Query (Q), Key (K), and Value (V). These transformations are achieved through linear layers (learnable weight matrices) applied to the input embedding $x_i$ for each token $i$:
 
 *   **Query (Q):** Represents what we are looking for. When computing the attention for a specific word, its Query vector is used to score against all other words.
 *   **Key (K):** Represents what each word contains. Each word's Key vector is compared with the Query vector of the word being processed.
 *   **Value (V):** Contains the actual information or content of the word that will be aggregated based on the attention scores.
 
-Mathematically, for an input embedding (x_i) for token (i), the Query, Key, and Value vectors are derived as follows:
+Mathematically, for an input embedding $x_i$ for token $i$, the Query, Key, and Value vectors are derived as follows:
 
-[
-Qᵢ = x_i W^Q
-]
-[
-Kᵢ = x_i W^K
-]
-[
-Vᵢ = x_i W^V
-]
+$$Q_i = x_i W^Q$$
 
-Where (W^Q), (W^K), and (W^V) are learnable weight matrices that are shared across all tokens in a layer.
+$$K_i = x_i W^K$$
+
+$$V_i = x_i W^V$$
+
+Where $W^Q$, $W^K$, and $W^V$ are learnable weight matrices that are shared across all tokens in a layer.
 
 #### 3.1.2. Scaled Dot-Product Attention
 
 The core computation of self-attention is the scaled dot-product attention. It determines how much focus each word should place on other words in the sequence. The steps are as follows:
 
-1.  **Calculate Attention Scores:** For each Query vector (Qᵢ), compute a dot product with all Key vectors (K_j) in the sequence. This dot product measures the similarity or relevance between the word at position (i) and the word at position (j).
+1.  **Calculate Attention Scores:** For each Query vector $Q_i$, compute a dot product with all Key vectors $K_j$ in the sequence. This dot product measures the similarity or relevance between the word at position $i$ and the word at position $j$.
 
-2.  **Scale the Scores:** The dot products are divided by the square root of the dimension of the Key vectors, (√(dₖ)). This scaling factor helps to stabilize the gradients during training, especially when (dₖ) is large, preventing the dot products from becoming too large and pushing the softmax function into regions with tiny gradients.
+2.  **Scale the Scores:** The dot products are divided by the square root of the dimension of the Key vectors, $\sqrt{d_k}$. This scaling factor helps to stabilize the gradients during training, especially when $d_k$ is large, preventing the dot products from becoming too large and pushing the softmax function into regions with tiny gradients.
 
 3.  **Apply Softmax:** A softmax function is applied to the scaled scores. This normalized the scores into a probability distribution, ensuring that they sum to 1. These normalized scores represent the attention weights, indicating how much each word in the sequence contributes to the representation of the current word.
 
-4.  **Weighted Sum of Value Vectors:** Finally, these attention weights are multiplied by their corresponding Value vectors (V_j) and summed up. This weighted sum forms the output of the self-attention layer for the word at position (i), effectively incorporating information from all other words based on their relevance.
+4.  **Weighted Sum of Value Vectors:** Finally, these attention weights are multiplied by their corresponding Value vectors $V_j$ and summed up. This weighted sum forms the output of the self-attention layer for the word at position $i$, effectively incorporating information from all other words based on their relevance.
 
-The mathematical formulation for Scaled Dot-Product Attention for a set of queries (Q), keys (K), and values (V) (where (Q), (K), (V) are matrices formed by stacking the individual (Qᵢ), (Kᵢ), (Vᵢ) vectors) is:
+The mathematical formulation for Scaled Dot-Product Attention for a set of queries $Q$, keys $K$, and values $V$ (where $Q$, $K$, $V$ are matrices formed by stacking the individual $Q_i$, $K_i$, $V_i$ vectors) is:
 
-**Attention(Q, K, V) = softmax((QKᵀ)/(√(dₖ)))V
-**
+$$\mathrm{Attention}(Q, K, V) = \mathrm{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
 
-Where (dₖ) is the dimension of the key vectors.
+Where $d_k$ is the dimension of the key vectors.
 
 #### 3.1.3. Multi-Head Attention
 
@@ -232,26 +227,21 @@ Instead of performing a single attention function, Multi-Head Attention allows t
 
 Multi-Head Attention works by:
 
-1.  **Projecting Q, K, V multiple times:** The Query, Key, and Value matrices are linearly projected (h) times (where (h) is the number of heads) with different, independently learned linear transformations.
+1.  **Projecting Q, K, V multiple times:** The Query, Key, and Value matrices are linearly projected $h$ times (where $h$ is the number of heads) with different, independently learned linear transformations.
 
-    [
-    Q_m = Q W^Q_m, K_m = K W^K_m, V_m = V W^V_m
-    ]
-    for each head (m = 1, dots, h).
+    $$Q_m = Q W^Q_m, \quad K_m = K W^K_m, \quad V_m = V W^V_m$$
+    
+    for each head $m = 1, \ldots, h$.
 
-2.  **Running Attention in parallel:** For each of these projected versions, the scaled dot-product attention function is applied in parallel, resulting in (h) different attention outputs.
+2.  **Running Attention in parallel:** For each of these projected versions, the scaled dot-product attention function is applied in parallel, resulting in $h$ different attention outputs.
 
-    [
-    head_m = Attention(Q_m, K_m, V_m)
-    ]
+    $$\text{head}_m = \text{Attention}(Q_m, K_m, V_m)$$
 
-3.  **Concatenating and Projecting:** The outputs from all (h) attention heads are then concatenated and linearly transformed once more to produce the final output of the Multi-Head Attention layer.
+3.  **Concatenating and Projecting:** The outputs from all $h$ attention heads are then concatenated and linearly transformed once more to produce the final output of the Multi-Head Attention layer.
 
-    [
-    MultiHead(Q, K, V) = Concat(head_1, dots, head_h)W^O
-    ]
+    $$\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, \ldots, \text{head}_h)W^O$$
 
-    Where (W^O) is another learnable weight matrix. This allows the model to combine the information from all attention heads into a single, richer representation.
+    Where $W^O$ is another learnable weight matrix. This allows the model to combine the information from all attention heads into a single, richer representation.
 
 ### 3.2. Cross-Attention (Encoder-Decoder Attention)
 
@@ -264,8 +254,7 @@ In cross-attention:
 
 The computation is identical to scaled dot-product attention:
 
-**CrossAttention(Q_{decoder}, K_{encoder}, V_{encoder}) = softmax(frac{Q_{decoder}K_{encoder}ᵀ}{√(dₖ)})V_{encoder}
-**
+$$\mathrm{CrossAttention}(Q_{\mathrm{decoder}}, K_{\mathrm{encoder}}, V_{\mathrm{encoder}}) = \mathrm{softmax}\left(\frac{Q_{\mathrm{decoder}}K_{\mathrm{encoder}}^T}{\sqrt{d_k}}\right)V_{\mathrm{encoder}}$$
 
 This allows the decoder to selectively retrieve information from the source sequence that is most relevant for generating the current target token, effectively bridging the encoder and decoder components.
 
@@ -277,10 +266,9 @@ Causal self-attention, also known as masked self-attention, addresses this by ap
 
 Mathematically, the masking is applied before the softmax:
 
-**Attention(Q, K, V) = softmax((QKᵀ + M)/(√(dₖ)))V
-**
+$$\mathrm{Attention}(Q, K, V) = \mathrm{softmax}\left(\frac{QK^T + M}{\sqrt{d_k}}\right)V$$
 
-Where (M) is the mask matrix. For a token at position (i), (M_{ij} = 0) if (j le i) (allowing attention to current and past tokens) and (M_{ij} = -infty) if (j > i) (masking out future tokens). After softmax, (e^{-infty}) becomes 0.
+Where $M$ is the mask matrix. For a token at position $i$, $M_{ij} = 0$ if $j \leq i$ (allowing attention to current and past tokens) and $M_{ij} = -\infty$ if $j > i$ (masking out future tokens). After softmax, $e^{-\infty}$ becomes 0.
 
 This causal masking is fundamental for decoder-only architectures (like GPT) that are designed for language generation, ensuring that the generation process remains auto-regressive and realistic.
 
@@ -288,35 +276,25 @@ This causal masking is fundamental for decoder-only architectures (like GPT) tha
 
 To summarize the mathematical formulation of the Scaled Dot-Product Attention, which is the building block for all attention mechanisms in the Transformer:
 
-Given a query matrix (Q in mathbb{R}^{n times dₖ}), a key matrix (K in mathbb{R}^{m times dₖ}), and a value matrix (V in mathbb{R}^{m times d_v}), where (n) is the number of queries, (m) is the number of keys/values, (dₖ) is the dimension of keys and queries, and (d_v) is the dimension of values:
+Given a query matrix $Q \in \mathbb{R}^{n \times d_k}$, a key matrix $K \in \mathbb{R}^{m \times d_k}$, and a value matrix $V \in \mathbb{R}^{m \times d_v}$, where $n$ is the number of queries, $m$ is the number of keys/values, $d_k$ is the dimension of keys and queries, and $d_v$ is the dimension of values:
 
 1.  **Compute Compatibility Scores:** The dot product between each query and all keys measures their compatibility.
-    [
-    S = QKᵀ
-    ]
-    Where (S in mathbb{R}^{n times m}) is the matrix of attention scores.
+    $$S = QK^T$$
+    Where $S \in \mathbb{R}^{n \times m}$ is the matrix of attention scores.
 
-2.  **Scale the Scores:** Divide the scores by (√(dₖ)) to prevent large values from dominating the softmax function.
-    [
-    S_{scaled} = (S)/(√(dₖ))
-    ]
+2.  **Scale the Scores:** Divide the scores by $\sqrt{d_k}$ to prevent large values from dominating the softmax function.
+    $$S_{\mathrm{scaled}} = \frac{S}{\sqrt{d_k}}$$
 
-3.  **Apply Mask (if applicable):** For causal attention, apply a mask (M) to (S_{scaled}) such that future positions are set to (-infty).
-    [
-    S_{masked} = S_{scaled} + M
-    ]
+3.  **Apply Mask (if applicable):** For causal attention, apply a mask $M$ to $S_{\mathrm{scaled}}$ such that future positions are set to $-\infty$.
+    $$S_{\mathrm{masked}} = S_{\mathrm{scaled}} + M$$
 
 4.  **Normalize with Softmax:** Apply the softmax function row-wise to obtain attention weights, ensuring they sum to 1 for each query.
-    [
-    A = softmax(S_{masked})
-    ]
-    Where (A in mathbb{R}^{n times m}) is the matrix of attention weights.
+    $$A = \mathrm{softmax}(S_{\mathrm{masked}})$$
+    Where $A \in \mathbb{R}^{n \times m}$ is the matrix of attention weights.
 
-5.  **Compute Weighted Sum of Values:** Multiply the attention weights by the Value matrix (V) to get the final output.
-    [
-    Output = AV
-    ]
-    Where (Output in mathbb{R}^{n times d_v}) is the context vector for each query.
+5.  **Compute Weighted Sum of Values:** Multiply the attention weights by the Value matrix $V$ to get the final output.
+    $$\text{Output} = AV$$
+    Where $\text{Output} \in \mathbb{R}^{n \times d_v}$ is the context vector for each query.
 
 This comprehensive mathematical framework underpins the Transformer's ability to efficiently and effectively model complex relationships within and between sequences, making it the backbone of modern LLMs.
 
@@ -376,7 +354,7 @@ Once text is tokenized, the discrete tokens need to be converted into continuous
 
 For each token, an embedding layer maps its integer ID to a dense vector. This mapping is learned during the training process. The initial embeddings are often randomly initialized and then updated via backpropagation as the model learns to perform its task.
 
-Mathematically, if we have a vocabulary of size (V) and an embedding dimension of (d_{model}), the embedding layer can be thought of as a lookup table or a matrix (E in mathbb{R}^{V times d_{model}}). For a token with ID (t), its embedding vector (e_t) is simply the (t^{th}) row of (E).
+Mathematically, if we have a vocabulary of size $V$ and an embedding dimension of $d_{\text{model}}$, the embedding layer can be thought of as a lookup table or a matrix $E \in \mathbb{R}^{V \times d_{\text{model}}}$. For a token with ID $t$, its embedding vector $e_t$ is simply the $t^{\text{th}}$ row of $E$.
 
 [
 Embedding(t) = E_t
@@ -390,9 +368,7 @@ One of the defining characteristics of the Transformer architecture is its relia
 
 Positional encodings are added to the input embeddings to re-inject this positional information into the model. These encodings are vectors that carry information about the position of each token in the sequence. They are added directly to the token embeddings before they are fed into the Transformer layers.
 
-[
-Input to Transformer = Token Embedding + Positional Encoding
-]
+$$\text{Input to Transformer} = \text{Token Embedding} + \text{Positional Encoding}$$
 
 #### 4.4.1. Why Positional Encodings are Necessary
 
@@ -400,14 +376,15 @@ Without positional encodings, a Transformer would treat a bag of words as input,
 
 #### 4.4.2. Absolute Positional Encodings (Sinusoidal)
 
-The original Transformer paper proposed using fixed, non-learnable sinusoidal positional encodings. These encodings are generated using sine and cosine functions of different frequencies. For a token at position (pos) in the sequence and for each dimension (i) of the positional encoding vector (where (i) ranges from 0 to (d_{model}-1) and (d_{model}) is the embedding dimension), the values are calculated as:
+The original Transformer paper proposed using fixed, non-learnable sinusoidal positional encodings. These encodings are generated using sine and cosine functions of different frequencies. For a token at position $\mathrm{pos}$ in the sequence and for each dimension $i$ of the positional encoding vector (where $i$ ranges from 0 to $d_{\mathrm{model}}-1$ and $d_{\mathrm{model}}$ is the embedding dimension), the values are calculated as:
 
-[
-PE_{(pos, 2i)} = sin((pos)/(10000^{2i/d_{model)}})
-]
-[
-PE_{(pos, 2i+1)} = cos((pos)/(10000^{2i/d_{model)}})
-]
+$$PE_{(\mathrm{pos}, 2i)} = \sin\left(\frac{\mathrm{pos}}{10000^{2i/d_{\mathrm{model}}}}\right)$$
+
+for even dimensions, and
+
+$$PE_{(\mathrm{pos}, 2i+1)} = \cos\left(\frac{\mathrm{pos}}{10000^{2i/d_{\mathrm{model}}}}\right)$$
+
+for odd dimensions.
 
 **Why sinusoidal functions?**
 
@@ -514,11 +491,9 @@ Pre-training is the foundational stage where an LLM learns the general patterns,
 
 The primary objective during pre-training is typically **language modeling**, which involves predicting missing words or the next word in a sequence. For decoder-only models (like GPT), the objective is often **next token prediction** (also known as causal language modeling). Given a sequence of tokens, the model learns to predict the probability distribution of the next token.
 
-Mathematically, for a sequence of tokens (x_1, x_2, dots, x_T), the model aims to maximize the likelihood of the sequence:
+Mathematically, for a sequence of tokens $x_1, x_2, \ldots, x_T$, the model aims to maximize the likelihood of the sequence:
 
-[
-L = Σ_{t=1}^{T} log P(x_t | x_1, dots, x_{t-1})
-]
+$$L = \sum_{t=1}^{T} \log P(x_t | x_1, \ldots, x_{t-1})$$
 
 This objective forces the model to learn complex linguistic structures, contextual relationships, and world knowledge embedded in the text. For encoder-only models (like BERT), pre-training objectives include **Masked Language Modeling (MLM)**, where a percentage of tokens are randomly masked, and the model predicts the original masked tokens, and **Next Sentence Prediction (NSP)**, where the model predicts if two segments of text follow each other.
 
@@ -571,11 +546,9 @@ Fine-tuning the entire LLM (full fine-tuning) can still be computationally expen
 
 *   **LoRA (Low-Rank Adaptation):** LoRA works by injecting small, trainable matrices into each layer of the Transformer architecture. Instead of fine-tuning the original weight matrices (W), LoRA introduces two low-rank matrices, (A) and (B), such that the update to (W) is represented as (W + BA). During fine-tuning, only (A) and (B) are trained, while (W) remains frozen. This significantly reduces the number of trainable parameters.
 
-    [
-    h = Wx + BAx
-    ]
+    $$h = Wx + BAx$$
 
-    Where (x) is the input, (h) is the output, and (BA) is the low-rank update matrix. The rank of (A) and (B) is much smaller than the original weight matrix, leading to fewer parameters.
+    Where $x$ is the input, $h$ is the output, and $BA$ is the low-rank update matrix. The rank of $A$ and $B$ is much smaller than the original weight matrix, leading to fewer parameters.
 
 *   **QLoRA (Quantized LoRA):** QLoRA builds upon LoRA by quantizing the pre-trained model to 4-bit precision. This further reduces memory requirements, allowing for fine-tuning of even larger models on consumer-grade GPUs. QLoRA uses a novel quantization technique called 4-bit NormalFloat (NF4) and double quantization to achieve this efficiency without significant performance degradation.
 
@@ -671,9 +644,9 @@ Stochastic sampling methods introduce randomness into the generation process, ma
 Temperature sampling modifies the probability distribution of the next token before sampling. A "temperature" parameter (T) is applied to the logits (raw output scores from the model before softmax) to make the distribution sharper or softer.
 
 *   **Process:**
-    1.  Compute the logits (z_i) for all possible next tokens.
-    2.  Divide the logits by the temperature (T).
-    3.  Apply softmax to get the modified probabilities (P' (x_i) = frac{e^{z_i/T}}{Σ_j e^{z_j/T}}).
+    1.  Compute the logits $z_i$ for all possible next tokens.
+    2.  Divide the logits by the temperature $T$.
+    3.  Apply softmax to get the modified probabilities $P'(x_i) = \frac{e^{z_i/T}}{\sum_j e^{z_j/T}}$.
     4.  Sample the next token from this modified distribution.
 
 *   **Effect of Temperature:**
@@ -2480,13 +2453,13 @@ PEFT methods generally work by freezing the majority of the pre-trained model's 
 
 ### 2.3. LoRA (Low-Rank Adaptation of Large Language Models)
 
-LoRA works on the principle of matrix decomposition. When fine-tuning a pre-trained model, instead of updating all the weights of the original weight matrix $W_0 in mathbb{R}^{d times k}$, LoRA introduces two low-rank matrices, $A in mathbb{R}^{d times r}$ and $B in mathbb{R}^{r times k}$, where $r ll min(d, k)$. The update to the original weight matrix, $Delta W$, is then represented as the product of these two matrices: $Delta W = BA$. The fine-tuning process only optimizes the parameters in $A$ and $B$, keeping the original $W_0$ frozen.
+LoRA works on the principle of matrix decomposition. When fine-tuning a pre-trained model, instead of updating all the weights of the original weight matrix $W_0 \in \mathbb{R}^{d \times k}$, LoRA introduces two low-rank matrices, $A \in \mathbb{R}^{d \times r}$ and $B \in \mathbb{R}^{r \times k}$, where $r \ll \min(d, k)$. The update to the original weight matrix, $\Delta W$, is then represented as the product of these two matrices: $\Delta W = BA$. The fine-tuning process only optimizes the parameters in $A$ and $B$, keeping the original $W_0$ frozen.
 
 The forward pass during training with LoRA can be expressed as:
 
-$h = W_0x + Delta W x = W_0x + (BA)x$
+$h = W_0x + \Delta W x = W_0x + (BA)x$
 
-where $h$ is the hidden layer output, $x$ is the input, $W_0$ represents the pre-trained frozen weights of shape $(d times k)$, and $B$ and $A$ are the new matrices of dimensions $(d times r)$ and $(r times k)$ respectively. The product $BA$ yields a matrix of shape $(d times k)$, which is then added to $W_0$.
+where $h$ is the hidden layer output, $x$ is the input, $W_0$ represents the pre-trained frozen weights of shape $(d \times k)$, and $B$ and $A$ are the new matrices of dimensions $(d \times r)$ and $(r \times k)$ respectively. The product $BA$ yields a matrix of shape $(d \times k)$, which is then added to $W_0$.
 
 ### Initialization of the A and B matrix from the original paper
 
@@ -2516,9 +2489,9 @@ def layer_parametrization(layer, device, rank = 1, lora_alpha = 1):
 
 ### 2.3.1. Theoretical Foundations and Mathematical Formulation (Continued)
 
-To further elaborate on LoRA's mathematical elegance, consider a pre-trained weight matrix $W_0 in mathbb{R}^{d times k}$. When fine-tuning, instead of directly learning a full $Delta W in mathbb{R}^{d times k}$, LoRA decomposes this update into two smaller matrices, $A in mathbb{R}^{d times r}$ and $B in mathbb{R}^{r times k}$, where $r$ is the 'rank' and is significantly smaller than $d$ and $k$. The update is then given by $Delta W = BA$. The number of trainable parameters is thus reduced from $d times k$ to $d times r + r times k = r(d+k)$. This is a substantial reduction, especially for large $d$ and $k$ and small $r$.
+To further elaborate on LoRA's mathematical elegance, consider a pre-trained weight matrix $W_0 \in \mathbb{R}^{d \times k}$. When fine-tuning, instead of directly learning a full $\Delta W \in \mathbb{R}^{d \times k}$, LoRA decomposes this update into two smaller matrices, $A \in \mathbb{R}^{d \times r}$ and $B \in \mathbb{R}^{r \times k}$, where $r$ is the 'rank' and is significantly smaller than $d$ and $k$. The update is then given by $\Delta W = BA$. The number of trainable parameters is thus reduced from $d \times k$ to $d \times r + r \times k = r(d+k)$. This is a substantial reduction, especially for large $d$ and $k$ and small $r$.
 
-For example, if $d=1024$, $k=1024$, and $r=8$, full fine-tuning would require $1024 times 1024 approx 1$ million parameters. With LoRA, the trainable parameters become $8 times (1024 + 1024) = 8 times 2048 = 16384$. This is a reduction of over 98% in trainable parameters, leading to significant memory and computational savings.
+For example, if $d=1024$, $k=1024$, and $r=8$, full fine-tuning would require $1024 \times 1024 \approx 1$ million parameters. With LoRA, the trainable parameters become $8 \times (1024 + 1024) = 8 \times 2048 = 16384$. This is a reduction of over 98% in trainable parameters, leading to significant memory and computational savings.
 
 The forward pass with LoRA can be visualized as:
 
@@ -2785,16 +2758,16 @@ The mathematical formulation of RLHF often involves optimizing a policy (the LLM
 
 For a given iteration $t$ of an RLHF algorithm like REBEL, the objective can be formulated as:
 
-$θ_{t+1} = argmin_{θ in Theta} Σ_{(x, y, y') in D_t} left( (1)/(eta) left( ln frac{π_{θ}(y|x)}{π_{θ_t}(y|x)} - ln frac{π_{θ}(y'|x)}{π_{θ_t}(y'|x)} right) - (r(x,y) - r(x,y')) right)^2$
+$$\theta_{t+1} = \arg\min_{\theta \in \Theta} \sum_{(x, y, y') \in D_t} \left( \frac{1}{\eta} \left( \ln \frac{\pi_{\theta}(y|x)}{\pi_{\theta_t}(y|x)} - \ln \frac{\pi_{\theta}(y'|x)}{\pi_{\theta_t}(y'|x)} \right) - (r(x,y) - r(x,y')) \right)^2$$
 
 Where:
-*   $θ$ represents the parameters of the policy model.
+*   $\theta$ represents the parameters of the policy model.
 *   $x$ is the prompt.
 *   $y$ and $y'$ are responses generated for prompt $x$.
 *   $D_t$ is the dataset collected from previous stages (SFT and RM training).
-*   $π_{θ}(y|x)$ is the probability of generating response $y$ given prompt $x$ under the parameterized policy $π_{θ}$.
+*   $\pi_{\theta}(y|x)$ is the probability of generating response $y$ given prompt $x$ under the parameterized policy $\pi_{\theta}$.
 *   $r(x,y)$ is the reward of response $y$ for prompt $x$, obtained from the Reward Model.
-*   $eta$ is a hyperparameter that controls the strength of the KL-divergence penalty, preventing the policy from diverging too much from the reference policy $π_{θ_t}$.
+*   $\eta$ is a hyperparameter that controls the strength of the KL-divergence penalty, preventing the policy from diverging too much from the reference policy $\pi_{\theta_t}$.
 
 This formulation aims to minimize the squared difference between the predicted preference (based on the policy model's probabilities and the KL penalty) and the actual preference given by the Reward Model. This effectively guides the policy model to generate responses that are highly rated by the Reward Model.
 
@@ -3174,11 +3147,11 @@ The process generally involves feeding text into a pre-trained embedding model, 
 
 ### Mathematical Formulation of Embeddings
 
-Let's consider a text document $D$. An embedding model $E$ transforms this document into a vector $	extbf{v}_D in R^d$, where $d$ is the dimensionality of the embedding space. So, $E(D) = textbf{v}_D$.
+Let's consider a text document $D$. An embedding model $E$ transforms this document into a vector $\textbf{v}_D \in \mathbb{R}^d$, where $d$ is the dimensionality of the embedding space. So, $E(D) = \textbf{v}_D$.
 
-Similarly, a query $Q$ is transformed into a vector $	extbf{v}_Q in R^d$, such that $E(Q) = textbf{v}_Q$.
+Similarly, a query $Q$ is transformed into a vector $\textbf{v}_Q \in \mathbb{R}^d$, such that $E(Q) = \textbf{v}_Q$.
 
-The power of embeddings lies in their ability to capture semantic meaning. If two documents $D_1$ and $D_2$ are semantically similar, their corresponding embedding vectors $	extbf{v}_{D1}$ and $	extbf{v}_{D2}$ will be close to each other in the vector space. This proximity allows us to quantify their similarity.
+The power of embeddings lies in their ability to capture semantic meaning. If two documents $D_1$ and $D_2$ are semantically similar, their corresponding embedding vectors $\textbf{v}_{D1}$ and $\textbf{v}_{D2}$ will be close to each other in the vector space. This proximity allows us to quantify their similarity.
 
 ## Similarity Search Algorithms
 
@@ -3192,14 +3165,14 @@ Cosine similarity is one of the most widely used metrics for comparing document 
 
 **Mathematical Formulation:**
 
-Given two vectors $textbf{A}$ and $textbf{B}$, their cosine similarity is defined as:
+Given two vectors $\textbf{A}$ and $\textbf{B}$, their cosine similarity is defined as:
 
-$$ cosine_similarity(textbf{A}, textbf{B}) = frac{textbf{A} cdot textbf{B}}{|textbf{A}| |textbf{B}|} = frac{Σ_{i=1}^{n} A_i B_i}{√(Σ_{i=1)^{n} A_i^2} √(Σ_{i=1)^{n} B_i^2}} $$
+$$\text{cosine\_similarity}(\textbf{A}, \textbf{B}) = \frac{\textbf{A} \cdot \textbf{B}}{|\textbf{A}| |\textbf{B}|} = \frac{\sum_{i=1}^{n} A_i B_i}{\sqrt{\sum_{i=1}^{n} A_i^2} \sqrt{\sum_{i=1}^{n} B_i^2}}$$
 
 Where:
-*   $textbf{A} cdot textbf{B}$ is the dot product of vectors $textbf{A}$ and $textbf{B}$.
-*   $|textbf{A}|$ and $|textbf{B}|$ are the Euclidean magnitudes (L2 norms) of vectors $textbf{A}$ and $textbf{B}$, respectively.
-*   $A_i$ and $B_i$ are the components of vectors $textbf{A}$ and $textbf{B}$.
+*   $\textbf{A} \cdot \textbf{B}$ is the dot product of vectors $\textbf{A}$ and $\textbf{B}$.
+*   $|\textbf{A}|$ and $|\textbf{B}|$ are the Euclidean magnitudes (L2 norms) of vectors $\textbf{A}$ and $\textbf{B}$, respectively.
+*   $A_i$ and $B_i$ are the components of vectors $\textbf{A}$ and $\textbf{B}$.
 
 **Why Cosine Similarity?**
 
@@ -3211,13 +3184,13 @@ The dot product, also known as the inner product, is another common similarity m
 
 **Mathematical Formulation:**
 
-Given two vectors $textbf{A}$ and $textbf{B}$, their dot product is defined as:
+Given two vectors $\textbf{A}$ and $\textbf{B}$, their dot product is defined as:
 
-$$ textbf{A} cdot textbf{B} = Σ_{i=1}^{n} A_i B_i $$
+$$ \textbf{A} \cdot \textbf{B} = \sum_{i=1}^{n} A_i B_i $$
 
-If vectors $textbf{A}$ and $textbf{B}$ are L2-normalized (i.e., $|textbf{A}| = 1$ and $|textbf{B}| = 1$), then:
+If vectors $\textbf{A}$ and $\textbf{B}$ are L2-normalized (i.e., $|\textbf{A}| = 1$ and $|\textbf{B}| = 1$), then:
 
-$$ cosine_similarity(textbf{A}, textbf{B}) = textbf{A} cdot textbf{B} $$
+$$ \text{cosine\_similarity}(\textbf{A}, \textbf{B}) = \textbf{A} \cdot \textbf{B} $$
 
 **Practical Implication:** If your embedding model outputs normalized vectors, using dot product for similarity search is faster as it avoids the square root and division operations required for calculating magnitudes.
 
@@ -3752,12 +3725,12 @@ This approach involves normalizing the scores from different retrieval methods (
 
 **Mathematical Formulation:**
 
-$$ Combined_Score(d) = α cdot Normalized_Lexical_Score(d) + (1 - α) cdot Normalized_Semantic_Score(d) $$
+$$ \text{Combined\_Score}(d) = \alpha \cdot \text{Normalized\_Lexical\_Score}(d) + (1 - \alpha) \cdot \text{Normalized\_Semantic\_Score}(d) $$
 
 Where:
-*   $Normalized_Lexical_Score(d)$ is the normalized score from the lexical search (e.g., BM25).
-*   $Normalized_Semantic_Score(d)$ is the normalized score from the semantic search (e.g., cosine similarity).
-*   $α$ is a weighting factor between 0 and 1, determining the relative importance of each method. This parameter often requires tuning.
+*   $\text{Normalized\_Lexical\_Score}(d)$ is the normalized score from the lexical search (e.g., BM25).
+*   $\text{Normalized\_Semantic\_Score}(d)$ is the normalized score from the semantic search (e.g., cosine similarity).
+*   $\alpha$ is a weighting factor between 0 and 1, determining the relative importance of each method. This parameter often requires tuning.
 
 ### 3. Re-ranking with a Cross-Encoder
 
@@ -3776,13 +3749,13 @@ Cross-encoders are typically transformer models fine-tuned for relevance ranking
 
 The BM25 score for a document $D$ and a query $Q$ (composed of terms $q_1, q_2, ..., q_m$) is typically calculated as:
 
-$$ Score(D, Q) = Σ_{i=1}^{m} IDF(q_i) cdot (f(q_i, D) cdot (k_1 + 1))/(f(q_i, D) + k_1 cdot (1 - b + b cdot frac{len(D)){avgdl})} $$
+$$\text{Score}(D, Q) = \sum_{i=1}^{m} \text{IDF}(q_i) \cdot \frac{f(q_i, D) \cdot (k_1 + 1)}{f(q_i, D) + k_1 \cdot \left(1 - b + b \cdot \frac{\text{len}(D)}{\text{avgdl}}\right)}$$
 
 Where:
 *   $f(q_i, D)$ is the term frequency of query term $q_i$ in document $D$.
-*   $len(D)$ is the length of document $D$ (in words).
-*   $avgdl$ is the average document length in the corpus.
-*   $k_1$ and $b$ are free parameters, typically $k_1 in [1.2, 2.0]$ and $b in [0.75, 0.8]$.
+*   $\text{len}(D)$ is the length of document $D$ (in words).
+*   $\text{avgdl}$ is the average document length in the corpus.
+*   $k_1$ and $b$ are free parameters, typically $k_1 \in [1.2, 2.0]$ and $b \in [0.75, 0.8]$.
 *   $IDF(q_i)$ is the Inverse Document Frequency of query term $q_i$, which measures how much information the term provides (rarer terms have higher IDF).
 
 BM25 is highly effective for keyword matching and is often used as the lexical component in hybrid retrieval systems.
